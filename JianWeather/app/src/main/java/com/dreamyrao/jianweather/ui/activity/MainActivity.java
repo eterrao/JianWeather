@@ -2,32 +2,82 @@ package com.dreamyrao.jianweather.ui.activity;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.Volley;
 import com.dreamyrao.jianweather.R;
+import com.dreamyrao.jianweather.bean.WeatherBean;
+import com.dreamyrao.jianweather.utils.AppConstant;
+import com.dreamyrao.jianweather.utils.AsyncRequestable;
+import com.dreamyrao.jianweather.utils.Executable;
+import com.dreamyrao.jianweather.utils.HttpUtils;
 
 public class MainActivity extends AppCompatActivity {
+    private TextView weatherTV;
+    private Toolbar toolbar;
+    private FloatingActionButton fab;
+
+    private RequestQueue queue;
+
+    private WeatherBean weatherBean;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        queue = Volley.newRequestQueue(this);
+        initView();
+
+    }
+
+    private void initView() {
+        weatherTV = (TextView) findViewById(R.id.tv_main_content);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                getWeatherInfo();
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
             }
         });
+    }
+
+    private void getWeatherInfo() {
+        HttpUtils.doVolleyPost(new AsyncRequestable() {
+            @Override
+            public String getQueueTag() {
+                return null;
+            }
+
+            @Override
+            public RequestQueue getQueue() {
+                return queue;
+            }
+        }, HttpUtils.getWeatherUrl(), new Executable<String>() {
+            @Override
+            public void execute(String s) {
+//                Toast.makeText(MainActivity.this, s.toString(), Toast.LENGTH_SHORT).show();
+                weatherTV.setText(WeatherBean.createFromJsonString(s.toString()).getCity());
+            }
+        }, new Executable<VolleyError>() {
+            @Override
+            public void execute(VolleyError volleyError) {
+
+            }
+        }, "cityid", AppConstant.API_WEATHER_CITY_ID, "key", AppConstant.API_WEATHER_KEY);
+
     }
 
     @Override
